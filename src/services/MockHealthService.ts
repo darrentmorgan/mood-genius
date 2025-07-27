@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {HealthData, SleepData, StepsData, HeartRateData, AIInsight, HealthCorrelation} from '../types/health';
-import {getMoodEntries, MoodEntry, generateSampleMoodEntries} from '../utils/storage';
+import {getMoodEntries, MoodEntry, generateSampleMoodEntries} from '../utils/storageFirestore';
+import FirestoreService from './FirestoreService';
+import AuthService from './AuthService';
 
 class MockHealthService {
   private readonly HEALTH_STORAGE_KEY = 'mock_health_data';
@@ -109,7 +111,13 @@ class MockHealthService {
         healthData.push(healthEntry);
       }
       
-      await AsyncStorage.setItem(this.HEALTH_STORAGE_KEY, JSON.stringify(healthData));
+      if (AuthService.isAuthenticated()) {
+        // Save to Firestore for authenticated users
+        await FirestoreService.saveHealthData(healthData);
+      } else {
+        // Fallback to AsyncStorage
+        await AsyncStorage.setItem(this.HEALTH_STORAGE_KEY, JSON.stringify(healthData));
+      }
       console.log(`✅ Generated ${healthData.length} health data entries`);
       
       return healthData;
@@ -122,13 +130,23 @@ class MockHealthService {
   // Get stored health data
   async getHealthData(): Promise<HealthData[]> {
     try {
-      const data = await AsyncStorage.getItem(this.HEALTH_STORAGE_KEY);
-      if (data) {
-        return JSON.parse(data);
+      if (AuthService.isAuthenticated()) {
+        // Use Firestore for authenticated users
+        const data = await FirestoreService.getHealthData();
+        if (data.length > 0) {
+          return data;
+        }
+        // Generate initial data if none exists
+        return await this.generateMockHealthData();
+      } else {
+        // Fallback to AsyncStorage
+        const data = await AsyncStorage.getItem(this.HEALTH_STORAGE_KEY);
+        if (data) {
+          return JSON.parse(data);
+        }
+        // Generate initial data if none exists
+        return await this.generateMockHealthData();
       }
-      
-      // Generate initial data if none exists
-      return await this.generateMockHealthData();
     } catch (error) {
       console.error('❌ Error getting health data:', error);
       return [];
@@ -289,7 +307,13 @@ class MockHealthService {
         insights.push(...correlationInsights);
       }
 
-      await AsyncStorage.setItem(this.INSIGHTS_STORAGE_KEY, JSON.stringify(insights));
+      if (AuthService.isAuthenticated()) {
+        // Save to Firestore for authenticated users
+        await FirestoreService.saveInsights(insights);
+      } else {
+        // Fallback to AsyncStorage
+        await AsyncStorage.setItem(this.INSIGHTS_STORAGE_KEY, JSON.stringify(insights));
+      }
       return insights;
     } catch (error) {
       console.error('❌ Error generating AI insights:', error);
@@ -484,12 +508,21 @@ class MockHealthService {
   // Get stored insights
   async getAIInsights(): Promise<AIInsight[]> {
     try {
-      const data = await AsyncStorage.getItem(this.INSIGHTS_STORAGE_KEY);
-      if (data) {
-        return JSON.parse(data);
+      if (AuthService.isAuthenticated()) {
+        // Use Firestore for authenticated users
+        const data = await FirestoreService.getInsights();
+        if (data.length > 0) {
+          return data;
+        }
+        return await this.generateAIInsights();
+      } else {
+        // Fallback to AsyncStorage
+        const data = await AsyncStorage.getItem(this.INSIGHTS_STORAGE_KEY);
+        if (data) {
+          return JSON.parse(data);
+        }
+        return await this.generateAIInsights();
       }
-      
-      return await this.generateAIInsights();
     } catch (error) {
       console.error('❌ Error getting AI insights:', error);
       return [];
@@ -506,8 +539,15 @@ class MockHealthService {
 
   // Clear all mock data
   async clearMockData(): Promise<void> {
-    await AsyncStorage.removeItem(this.HEALTH_STORAGE_KEY);
-    await AsyncStorage.removeItem(this.INSIGHTS_STORAGE_KEY);
+    if (AuthService.isAuthenticated()) {
+      // Clear from Firestore for authenticated users
+      await FirestoreService.clearHealthData();
+      await FirestoreService.clearInsights();
+    } else {
+      // Fallback to AsyncStorage
+      await AsyncStorage.removeItem(this.HEALTH_STORAGE_KEY);
+      await AsyncStorage.removeItem(this.INSIGHTS_STORAGE_KEY);
+    }
     console.log('🗑️ Mock health data cleared');
   }
 }

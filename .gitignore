@@ -136,3 +136,11 @@ android/fastlane/test_output
 
 # Testing
 /coverage
+
+# Firebase Configuration Files (contain sensitive data)
+google-services.json
+GoogleService-Info.plist
+
+# Keep template files (these are safe to commit)
+!google-services.json.template
+!GoogleService-Info.plist.template

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
-import {getMoodEntries, MoodEntry} from '../utils/storage';
+import {getMoodEntries, MoodEntry} from '../utils/storageFirestore';
 import {getMoodEmoji, getMoodLabel} from '../utils/moodUtils';
 
 const HistoryScreen = () => {

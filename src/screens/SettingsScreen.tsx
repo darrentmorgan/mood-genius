@@ -11,7 +11,7 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import {HealthSettings} from '../types/health';
 import {getHealthSettings, saveHealthSettings, toggleMockData} from '../utils/healthSettings';
-import {generateSampleMoodEntries, clearMoodEntries, debugMoodEntries} from '../utils/storage';
+import {generateSampleMoodEntries, clearMoodEntries, debugMoodEntries} from '../utils/storageFirestore';
 import MockHealthService from '../services/MockHealthService';
 
 const SettingsScreen = () => {

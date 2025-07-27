@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {saveMoodEntry} from '../utils/storage';
+import {saveMoodEntry} from '../utils/storageFirestore';
 import {moodOptions, getMoodData} from '../utils/moodUtils';
 
 const MoodEntryScreen = () => {

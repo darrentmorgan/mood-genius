@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {getTodaysMoodEntry, getMoodEntries, MoodEntry} from '../utils/storage';
+import {getTodaysMoodEntry, getMoodEntries, MoodEntry} from '../utils/storageFirestore';
 import {getHealthSettings} from '../utils/healthSettings';
 import MockHealthService from '../services/MockHealthService';
 import {HealthData} from '../types/health';
