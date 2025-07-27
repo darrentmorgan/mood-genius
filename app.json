@@ -1,0 +1,32 @@
+{
+  "name": "main",
+  "displayName": "MoodGenius",
+  "expo": {
+    "name": "MoodGenius",
+    "slug": "mood-genius", 
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#6366f1"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "jsEngine": "hermes"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6366f1"
+      },
+      "jsEngine": "hermes"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "sdkVersion": "53.0.0"
+  }
+}
