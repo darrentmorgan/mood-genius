@@ -9,7 +9,7 @@ class MockHealthService {
   // Generate realistic correlated health data based on mood
   private generateHealthDataForMood(mood: number, date: Date): HealthData {
     // Base correlations: better mood = better health metrics (with realistic variance)
-    const moodFactor = mood / 10; // 0.1 to 1.0
+    const moodFactor = mood / 5; // 0.2 to 1.0 (adjusted for 1-5 scale)
     const randomVariance = () => 0.8 + Math.random() * 0.4; // 0.8 to 1.2
 
     // Sleep data (6-9 hours, correlated with mood)
@@ -101,7 +101,7 @@ class MockHealthService {
           entry.date === date.toDateString()
         );
         
-        const mood = dayMoodEntry?.mood || (5 + Math.random() * 3); // Default 5-8 if no mood
+        const mood = dayMoodEntry?.mood || (3 + Math.random() * 1); // Default 3-4 if no mood (neutral to happy)
         const healthEntry = this.generateHealthDataForMood(mood, date);
         healthData.push(healthEntry);
       }

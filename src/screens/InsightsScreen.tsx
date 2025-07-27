@@ -12,6 +12,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import {AIInsight, HealthCorrelation, HealthData} from '../types/health';
 import MockHealthService from '../services/MockHealthService';
 import {getHealthSettings} from '../utils/healthSettings';
+import {getMoodEmoji, getMoodLabel} from '../utils/moodUtils';
 
 const InsightsScreen = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);

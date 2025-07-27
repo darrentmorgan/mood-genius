@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,38 +7,51 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
+import {useNavigation} from '@react-navigation/native';
 import {saveMoodEntry} from '../utils/storage';
+import {moodOptions, getMoodData} from '../utils/moodUtils';
 
 const MoodEntryScreen = () => {
-  const [mood, setMood] = useState(5);
+  const [mood, setMood] = useState(3); // Default to neutral (middle option)
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const notesInputRef = useRef<TextInput>(null);
+  const navigation = useNavigation();
 
-  const getMoodEmoji = (moodValue: number) => {
-    if (moodValue <= 2) return '😢';
-    if (moodValue <= 4) return '😕';
-    if (moodValue <= 6) return '😐';
-    if (moodValue <= 8) return '🙂';
-    return '😄';
+  const getCurrentMoodData = () => {
+    return getMoodData(mood);
   };
 
-  const getMoodLabel = (moodValue: number) => {
-    if (moodValue <= 2) return 'Very Sad';
-    if (moodValue <= 4) return 'Sad';
-    if (moodValue <= 6) return 'Neutral';
-    if (moodValue <= 8) return 'Happy';
-    return 'Very Happy';
+  const handleNoteFocus = () => {
+    // Scroll to notes input when focused and ensure submit button is visible
+    setTimeout(() => {
+      notesInputRef.current?.measure((x, y, width, height, pageX, pageY) => {
+        // Scroll to position the notes input in the middle of the screen
+        // This ensures both the input and submit button are visible
+        const scrollToY = Math.max(0, pageY - 200); // 200px from top of screen
+        scrollViewRef.current?.scrollTo({ x: 0, y: scrollToY, animated: true });
+      });
+    }, 300); // Delay to ensure keyboard animation starts
   };
 
   const handleSaveMood = async () => {
     setIsLoading(true);
     try {
       await saveMoodEntry(mood, notes);
-      Alert.alert('Success', 'Your mood has been saved!');
-      setNotes('');
-      setMood(5);
+      Alert.alert('Success', 'Your mood has been saved!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            setNotes('');
+            setMood(3); // Reset to neutral
+            navigation.navigate('Home' as never);
+          }
+        }
+      ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to save your mood. Please try again.');
     } finally {
@@ -47,58 +60,87 @@ const MoodEntryScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>How are you feeling today?</Text>
-        
-        <View style={styles.moodContainer}>
-          <Text style={styles.moodEmoji}>{getMoodEmoji(mood)}</Text>
-          <Text style={styles.moodLabel}>{getMoodLabel(mood)}</Text>
-          <Text style={styles.moodValue}>{mood}/10</Text>
-        </View>
-
-        <View style={styles.sliderContainer}>
-          <Text style={styles.sliderLabel}>Rate your mood:</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={1}
-            maximumValue={10}
-            step={1}
-            value={mood}
-            onValueChange={setMood}
-            minimumTrackTintColor="#6366f1"
-            maximumTrackTintColor="#e5e7eb"
-            thumbStyle={styles.sliderThumb}
-          />
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabelText}>1</Text>
-            <Text style={styles.sliderLabelText}>10</Text>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        ref={scrollViewRef} 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+      >
+        <View style={styles.content}>
+          <Text style={styles.title}>How are you feeling today?</Text>
+          
+          <View style={styles.selectedMoodContainer}>
+            <Text style={styles.selectedMoodEmoji}>{getCurrentMoodData().emoji}</Text>
+            <Text style={styles.selectedMoodLabel}>{getCurrentMoodData().label}</Text>
           </View>
-        </View>
 
-        <View style={styles.notesContainer}>
-          <Text style={styles.notesLabel}>Notes (optional):</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="How was your day? What made you feel this way?"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
+          <View style={styles.moodOptionsContainer}>
+            <Text style={styles.moodOptionsLabel}>Choose your mood:</Text>
+            <View style={styles.moodOptionsGrid}>
+              {moodOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.moodOption,
+                    mood === option.value && styles.selectedMoodOption,
+                    mood === option.value && { borderColor: option.color }
+                  ]}
+                  onPress={() => setMood(option.value)}
+                  activeOpacity={0.7}
+                  delayPressIn={0}
+                >
+                  <Text style={[
+                    styles.moodOptionEmoji,
+                    mood === option.value && styles.selectedMoodOptionEmoji
+                  ]}>
+                    {option.emoji}
+                  </Text>
+                  <Text style={[
+                    styles.moodOptionLabel,
+                    mood === option.value && styles.selectedMoodOptionLabel
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-        <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-          onPress={handleSaveMood}
-          disabled={isLoading}>
-          <Text style={styles.saveButtonText}>
-            {isLoading ? 'Saving...' : 'Save Mood'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <View style={styles.notesContainer}>
+            <Text style={styles.notesLabel}>Notes (optional):</Text>
+            <TextInput
+              ref={notesInputRef}
+              style={styles.notesInput}
+              value={notes}
+              onChangeText={setNotes}
+              onFocus={handleNoteFocus}
+              placeholder="How was your day? What made you feel this way?"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+            onPress={handleSaveMood}
+            disabled={isLoading}
+            activeOpacity={0.8}
+            delayPressIn={0}>
+            <Text style={styles.saveButtonText}>
+              {isLoading ? 'Saving...' : 'Save Mood'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -107,8 +149,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
+  },
   content: {
     padding: 20,
+    minHeight: '100%',
   },
   title: {
     fontSize: 24,
@@ -117,9 +167,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
   },
-  moodContainer: {
+  selectedMoodContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
     padding: 20,
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -132,21 +182,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  moodEmoji: {
+  selectedMoodEmoji: {
     fontSize: 80,
     marginBottom: 10,
   },
-  moodLabel: {
+  selectedMoodLabel: {
     fontSize: 20,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 5,
   },
-  moodValue: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  sliderContainer: {
+  moodOptionsContainer: {
     marginBottom: 30,
     backgroundColor: '#ffffff',
     padding: 20,
@@ -160,29 +205,53 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  sliderLabel: {
+  moodOptionsLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 15,
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  sliderThumb: {
-    backgroundColor: '#6366f1',
-    width: 20,
-    height: 20,
-  },
-  sliderLabels: {
+  moodOptionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 5,
+    alignItems: 'center',
   },
-  sliderLabelText: {
-    fontSize: 14,
+  moodOption: {
+    width: 60,
+    height: 80,
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  selectedMoodOption: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 3,
+    transform: [{ scale: 1.05 }],
+  },
+  moodOptionEmoji: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  selectedMoodOptionEmoji: {
+    fontSize: 36,
+  },
+  moodOptionLabel: {
+    fontSize: 9,
+    fontWeight: '500',
     color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 10,
+  },
+  selectedMoodOptionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#1e40af',
   },
   notesContainer: {
     marginBottom: 30,

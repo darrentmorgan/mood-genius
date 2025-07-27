@@ -12,6 +12,7 @@ import {getTodaysMoodEntry, getMoodEntries, MoodEntry} from '../utils/storage';
 import {getHealthSettings} from '../utils/healthSettings';
 import MockHealthService from '../services/MockHealthService';
 import {HealthData} from '../types/health';
+import {getMoodEmoji, getMoodLabel} from '../utils/moodUtils';
 
 const HomeScreen = () => {
   const [todaysMood, setTodaysMood] = useState<MoodEntry | null>(null);
@@ -53,22 +54,6 @@ const HomeScreen = () => {
       loadData();
     }, [])
   );
-
-  const getMoodEmoji = (moodValue: number) => {
-    if (moodValue <= 2) return '😢';
-    if (moodValue <= 4) return '😕';
-    if (moodValue <= 6) return '😐';
-    if (moodValue <= 8) return '🙂';
-    return '😄';
-  };
-
-  const getMoodLabel = (moodValue: number) => {
-    if (moodValue <= 2) return 'Very Sad';
-    if (moodValue <= 4) return 'Sad';
-    if (moodValue <= 6) return 'Neutral';
-    if (moodValue <= 8) return 'Happy';
-    return 'Very Happy';
-  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -112,7 +97,7 @@ const HomeScreen = () => {
                 {getMoodEmoji(todaysMood.mood)}
               </Text>
               <View style={styles.moodInfo}>
-                <Text style={styles.moodValue}>{todaysMood.mood}/10</Text>
+                <Text style={styles.moodValue}>{todaysMood.mood}/5</Text>
                 <Text style={styles.moodLabel}>
                   {getMoodLabel(todaysMood.mood)}
                 </Text>
@@ -155,7 +140,7 @@ const HomeScreen = () => {
                   {getMoodEmoji(entry.mood)}
                 </Text>
                 <View style={styles.recentMoodInfo}>
-                  <Text style={styles.recentMoodValue}>{entry.mood}/10</Text>
+                  <Text style={styles.recentMoodValue}>{entry.mood}/5</Text>
                   <Text style={styles.recentDate}>
                     {formatDate(entry.timestamp)}
                   </Text>

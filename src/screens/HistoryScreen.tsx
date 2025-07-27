@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {getMoodEntries, MoodEntry} from '../utils/storage';
+import {getMoodEmoji, getMoodLabel} from '../utils/moodUtils';
 
 const HistoryScreen = () => {
   const [entries, setEntries] = useState<MoodEntry[]>([]);
@@ -35,22 +36,6 @@ const HistoryScreen = () => {
     }, [])
   );
 
-  const getMoodEmoji = (moodValue: number) => {
-    if (moodValue <= 2) return '😢';
-    if (moodValue <= 4) return '😕';
-    if (moodValue <= 6) return '😐';
-    if (moodValue <= 8) return '🙂';
-    return '😄';
-  };
-
-  const getMoodLabel = (moodValue: number) => {
-    if (moodValue <= 2) return 'Very Sad';
-    if (moodValue <= 4) return 'Sad';
-    if (moodValue <= 6) return 'Neutral';
-    if (moodValue <= 8) return 'Happy';
-    return 'Very Happy';
-  };
-
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', {
@@ -75,7 +60,7 @@ const HistoryScreen = () => {
         <View style={styles.moodInfo}>
           <Text style={styles.moodEmoji}>{getMoodEmoji(item.mood)}</Text>
           <View style={styles.moodDetails}>
-            <Text style={styles.moodValue}>{item.mood}/10</Text>
+            <Text style={styles.moodValue}>{item.mood}/5</Text>
             <Text style={styles.moodLabel}>{getMoodLabel(item.mood)}</Text>
           </View>
         </View>
