@@ -9,19 +9,34 @@ import {
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {getTodaysMoodEntry, getMoodEntries, MoodEntry} from '../utils/storage';
+import {getHealthSettings} from '../utils/healthSettings';
+import MockHealthService from '../services/MockHealthService';
+import {HealthData} from '../types/health';
 
 const HomeScreen = () => {
   const [todaysMood, setTodaysMood] = useState<MoodEntry | null>(null);
   const [recentEntries, setRecentEntries] = useState<MoodEntry[]>([]);
+  const [todaysHealth, setTodaysHealth] = useState<HealthData | null>(null);
+  const [showHealthData, setShowHealthData] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
   const loadData = async () => {
     try {
-      const todaysEntry = await getTodaysMoodEntry();
-      const allEntries = await getMoodEntries();
+      const [todaysEntry, allEntries, healthSettings] = await Promise.all([
+        getTodaysMoodEntry(),
+        getMoodEntries(),
+        getHealthSettings(),
+      ]);
+      
       setTodaysMood(todaysEntry);
       setRecentEntries(allEntries.slice(0, 3));
+      setShowHealthData(healthSettings.useMockData);
+      
+      if (healthSettings.useMockData) {
+        const todaysHealthData = await MockHealthService.getTodaysHealthData();
+        setTodaysHealth(todaysHealthData);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -150,6 +165,37 @@ const HomeScreen = () => {
           </View>
         )}
 
+        {showHealthData && todaysHealth && (
+          <View style={styles.healthSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Today's Health</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Insights' as never)}>
+                <Text style={styles.viewAllText}>AI Insights</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.healthGrid}>
+              <View style={styles.healthCard}>
+                <Text style={styles.healthIcon}>😴</Text>
+                <Text style={styles.healthValue}>{todaysHealth.sleep.duration.toFixed(1)}h</Text>
+                <Text style={styles.healthLabel}>Sleep</Text>
+                <Text style={styles.healthQuality}>{todaysHealth.sleep.quality}</Text>
+              </View>
+              <View style={styles.healthCard}>
+                <Text style={styles.healthIcon}>🚶‍♂️</Text>
+                <Text style={styles.healthValue}>{todaysHealth.steps.count.toLocaleString()}</Text>
+                <Text style={styles.healthLabel}>Steps</Text>
+                <Text style={styles.healthQuality}>{todaysHealth.steps.distance.toFixed(1)}km</Text>
+              </View>
+              <View style={styles.healthCard}>
+                <Text style={styles.healthIcon}>❤️</Text>
+                <Text style={styles.healthValue}>{todaysHealth.heartRate.resting}</Text>
+                <Text style={styles.healthLabel}>Resting HR</Text>
+                <Text style={styles.healthQuality}>HRV {todaysHealth.heartRate.variability}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <TouchableOpacity
@@ -164,6 +210,14 @@ const HomeScreen = () => {
             <Text style={styles.actionButtonEmoji}>📊</Text>
             <Text style={styles.actionButtonText}>View History</Text>
           </TouchableOpacity>
+          {showHealthData && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Insights' as never)}>
+              <Text style={styles.actionButtonEmoji}>🤖</Text>
+              <Text style={styles.actionButtonText}>AI Insights</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -367,6 +421,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#374151',
+  },
+  healthSection: {
+    marginBottom: 24,
+  },
+  healthGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  healthCard: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  healthIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  healthValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  healthLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  healthQuality: {
+    fontSize: 10,
+    color: '#9ca3af',
+    textAlign: 'center',
   },
 });
 

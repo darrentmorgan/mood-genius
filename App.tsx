@@ -7,6 +7,8 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import HomeScreen from './src/screens/HomeScreen';
 import MoodEntryScreen from './src/screens/MoodEntryScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
+import InsightsScreen from './src/screens/InsightsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,6 +43,10 @@ const App = () => {
               emoji = '✨';
             } else if (route.name === 'History') {
               emoji = '📊';
+            } else if (route.name === 'Insights') {
+              emoji = '🤖';
+            } else if (route.name === 'Settings') {
+              emoji = '⚙️';
             }
 
             return <Text style={{fontSize: size * 0.8, color}}>{emoji}</Text>;
@@ -58,6 +64,8 @@ const App = () => {
           <Tab.Screen name="Home" component={HomeScreen} />
           <Tab.Screen name="Mood Entry" component={MoodEntryScreen} />
           <Tab.Screen name="History" component={HistoryScreen} />
+          <Tab.Screen name="Insights" component={InsightsScreen} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </ErrorBoundary>
