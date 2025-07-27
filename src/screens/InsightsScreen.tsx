@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {AIInsight, HealthCorrelation, HealthData} from '../types/health';
@@ -14,15 +16,20 @@ import MockHealthService from '../services/MockHealthService';
 import {getHealthSettings} from '../utils/healthSettings';
 import {getMoodEmoji, getMoodLabel} from '../utils/moodUtils';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 const InsightsScreen = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [healthData, setHealthData] = useState<HealthData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [useMockData, setUseMockData] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const carouselRef = useRef<FlatList>(null);
 
   const loadData = async () => {
     try {
+      console.log('🔄 InsightsScreen: Loading data...');
       const settings = await getHealthSettings();
       setUseMockData(settings.useMockData);
 
@@ -31,6 +38,7 @@ const InsightsScreen = () => {
           MockHealthService.getAIInsights(),
           MockHealthService.getHealthData(),
         ]);
+        console.log(`📊 Loaded ${insightsData.length} insights and ${healthDataResult.length} health entries`);
         setInsights(insightsData);
         setHealthData(healthDataResult);
       } else {
@@ -39,7 +47,7 @@ const InsightsScreen = () => {
         setHealthData([]);
       }
     } catch (error) {
-      console.error('Error loading insights:', error);
+      console.error('❌ Error loading insights:', error);
     } finally {
       setLoading(false);
     }
@@ -86,64 +94,157 @@ const InsightsScreen = () => {
   };
 
   const handleGenerateInsights = async () => {
+    console.log('🤖 Starting insight generation...');
     try {
       setLoading(true);
-      await MockHealthService.refreshMockData();
-      await loadData();
-      Alert.alert('Success', 'New insights generated based on your latest data!');
+      
+      // First ensure we have health data - generate if missing
+      console.log('📊 Checking for health data...');
+      let healthDataResult = await MockHealthService.getHealthData();
+      console.log(`Found ${healthDataResult.length} health entries`);
+      
+      if (healthDataResult.length === 0) {
+        console.log('🏥 No health data found, generating fresh data...');
+        healthDataResult = await MockHealthService.generateMockHealthData();
+        console.log(`Generated ${healthDataResult.length} health entries`);
+      }
+      setHealthData(healthDataResult);
+      
+      // Generate fresh AI insights based on current mood and health data
+      console.log('🧠 Generating AI insights...');
+      const freshInsights = await MockHealthService.generateAIInsights();
+      console.log(`Generated ${freshInsights.length} insights`);
+      setInsights(freshInsights);
+      
+      if (freshInsights.length > 0) {
+        Alert.alert(
+          'Insights Generated! 🤖', 
+          `Found ${freshInsights.length} personalized insights based on your mood and health patterns.`,
+          [{ text: 'Great!', onPress: () => {} }]
+        );
+      } else {
+        Alert.alert(
+          'Need More Data 📊', 
+          'Add a few more mood entries to generate meaningful insights. We need at least 5 days of data.',
+          [{ text: 'Got it', onPress: () => {} }]
+        );
+      }
     } catch (error) {
+      console.error('❌ Error generating insights:', error);
       Alert.alert('Error', 'Failed to generate insights. Please try again.');
+    } finally {
+      console.log('✅ Insight generation complete');
+      setLoading(false);
     }
   };
 
-  const renderInsight = (insight: AIInsight) => (
-    <View key={insight.id} style={styles.insightCard}>
-      <View style={styles.insightHeader}>
-        <Text style={styles.insightTitle}>{insight.title}</Text>
-        <View style={styles.confidenceBadge}>
-          <Text style={styles.confidenceText}>{insight.confidence}%</Text>
+  const getInsightTypeIcon = (type: string) => {
+    switch (type) {
+      case 'research': return '🔬';
+      case 'correlation': return '📊';
+      case 'recommendation': return '💡';
+      default: return '🤖';
+    }
+  };
+
+  const getInsightTypeColor = (type: string) => {
+    switch (type) {
+      case 'research': return '#3b82f6';
+      case 'correlation': return '#8b5cf6';
+      case 'recommendation': return '#10b981';
+      default: return '#6366f1';
+    }
+  };
+
+  const onScroll = (event: any) => {
+    const slideSize = screenWidth - 40; // Account for total padding and margins
+    const index = Math.round(event.nativeEvent.contentOffset.x / slideSize);
+    setCurrentIndex(index);
+  };
+
+  const goToSlide = (index: number) => {
+    carouselRef.current?.scrollToIndex({ index, animated: true });
+  };
+
+  const renderInsight = ({ item: insight, index }: { item: AIInsight; index: number }) => (
+    <View style={[styles.insightCard, { width: screenWidth - 60 }]}>
+      <ScrollView 
+        style={styles.cardScrollView}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        <View style={styles.insightHeader}>
+          <View style={styles.insightTitleContainer}>
+            <Text style={styles.insightTypeIcon}>{getInsightTypeIcon(insight.type)}</Text>
+            <Text style={styles.insightTitle}>{insight.title}</Text>
+          </View>
+          <View style={[
+            styles.confidenceBadge,
+            {backgroundColor: getInsightTypeColor(insight.type) + '20'}
+          ]}>
+            <Text style={[
+              styles.confidenceText,
+              {color: getInsightTypeColor(insight.type)}
+            ]}>
+              {insight.confidence}%
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <Text style={styles.insightDescription}>{insight.description}</Text>
-      
-      {insight.correlations && insight.correlations.length > 0 && (
-        <View style={styles.correlationsSection}>
-          <Text style={styles.correlationsTitle}>Correlations:</Text>
-          {insight.correlations.map((corr, index) => (
-            <View key={index} style={styles.correlationItem}>
-              <View style={styles.correlationHeader}>
-                <Text style={styles.correlationIcon}>{getCorrelationIcon(corr)}</Text>
-                <Text style={styles.correlationMetric}>{corr.metric}</Text>
-                <Text style={styles.correlationTrend}>{getTrendIcon(corr.trend)}</Text>
-              </View>
-              <View style={styles.correlationDetails}>
-                <View style={[
-                  styles.strengthBadge,
-                  {backgroundColor: getStrengthColor(corr.strength) + '20'}
-                ]}>
-                  <Text style={[
-                    styles.strengthText,
-                    {color: getStrengthColor(corr.strength)}
+        
+        <Text style={styles.insightDescription}>{insight.description}</Text>
+        
+        {insight.correlations && insight.correlations.length > 0 && (
+          <View style={styles.correlationsSection}>
+            <Text style={styles.correlationsTitle}>Personal Data:</Text>
+            {insight.correlations.map((corr, index) => (
+              <View key={index} style={styles.correlationItem}>
+                <View style={styles.correlationHeader}>
+                  <Text style={styles.correlationIcon}>{getCorrelationIcon(corr)}</Text>
+                  <Text style={styles.correlationMetric}>{corr.metric}</Text>
+                  <Text style={styles.correlationTrend}>{getTrendIcon(corr.trend)}</Text>
+                </View>
+                <View style={styles.correlationDetails}>
+                  <View style={[
+                    styles.strengthBadge,
+                    {backgroundColor: getStrengthColor(corr.strength) + '20'}
                   ]}>
-                    {corr.strength.toUpperCase()}
+                    <Text style={[
+                      styles.strengthText,
+                      {color: getStrengthColor(corr.strength)}
+                    ]}>
+                      {corr.strength.toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.correlationPercent}>
+                    {Math.abs(corr.correlation * 100).toFixed(0)}%
                   </Text>
                 </View>
-                <Text style={styles.correlationPercent}>
-                  {Math.abs(corr.correlation * 100).toFixed(0)}%
-                </Text>
               </View>
-            </View>
-          ))}
-        </View>
-      )}
-      
-      {insight.recommendation && (
-        <View style={styles.recommendationSection}>
-          <Text style={styles.recommendationTitle}>💡 Recommendation:</Text>
-          <Text style={styles.recommendationText}>{insight.recommendation}</Text>
-        </View>
-      )}
+            ))}
+          </View>
+        )}
+        
+        {insight.recommendation && (
+          <View style={[
+            styles.recommendationSection,
+            {backgroundColor: getInsightTypeColor(insight.type) + '10'}
+          ]}>
+            <Text style={[
+              styles.recommendationTitle,
+              {color: getInsightTypeColor(insight.type)}
+            ]}>
+              {insight.type === 'research' ? '🔬 Research Says:' : 
+               insight.type === 'correlation' ? '📊 Your Pattern:' : '💡 Recommendation:'}
+            </Text>
+            <Text style={[
+              styles.recommendationText,
+              {color: getInsightTypeColor(insight.type)}
+            ]}>
+              {insight.recommendation}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 
@@ -153,14 +254,46 @@ const InsightsScreen = () => {
       <Text style={styles.emptyTitle}>No Insights Yet</Text>
       <Text style={styles.emptyText}>
         {useMockData 
-          ? 'Add some mood entries and generate mock health data to see AI insights!'
+          ? 'Log a few moods first, then generate personalized insights based on research-backed health correlations!'
           : 'Connect your health data to start seeing personalized insights.'
         }
       </Text>
       {useMockData && (
-        <TouchableOpacity style={styles.generateButton} onPress={handleGenerateInsights}>
-          <Text style={styles.generateButtonText}>Generate Insights</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.generateButton} onPress={handleGenerateInsights}>
+            <Text style={styles.generateButtonText}>Generate Insights</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.generateButton, {backgroundColor: '#f59e0b', marginTop: 10}]} 
+            onPress={() => {
+              console.log('🧪 Creating test insights for carousel...');
+              const testInsights = [
+                {
+                  id: 'test1',
+                  type: 'research',
+                  title: 'Test Sleep Insight',
+                  description: 'This is a test insight to verify the carousel is working.',
+                  confidence: 85,
+                  actionable: true,
+                  recommendation: 'This is a test recommendation.',
+                },
+                {
+                  id: 'test2',
+                  type: 'correlation',
+                  title: 'Test Activity Insight',
+                  description: 'This is another test insight for the carousel.',
+                  confidence: 92,
+                  actionable: true,
+                  recommendation: 'Another test recommendation.',
+                }
+              ];
+              setInsights(testInsights);
+            }}
+          >
+            <Text style={styles.generateButtonText}>🧪 Test Carousel</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -205,47 +338,120 @@ const InsightsScreen = () => {
     );
   }
 
-  return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }>
-      <View style={styles.content}>
-        
-        {!useMockData && (
-          <View style={styles.warningCard}>
-            <Text style={styles.warningTitle}>⚠️ Real Data Mode</Text>
-            <Text style={styles.warningText}>
-              Real health data integration is not yet implemented. Enable mock data in Settings to test AI insights.
-            </Text>
-          </View>
-        )}
+  const renderPaginationDots = () => (
+    <View style={styles.paginationContainer}>
+      {insights.map((_, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.paginationDot,
+            currentIndex === index && styles.paginationDotActive
+          ]}
+          onPress={() => goToSlide(index)}
+        />
+      ))}
+    </View>
+  );
 
-        {useMockData && renderHealthSummary()}
-        
+  return (
+    <View style={styles.container}>
+      {/* Header Section */}
+      <View 
+        style={[
+          styles.headerSection, 
+          { maxHeight: insights.length > 0 ? 250 : '100%' }
+        ]}
+      >
         {insights.length === 0 ? (
-          renderEmptyState()
+          // Only show scrollable header when no carousel
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            {!useMockData && (
+              <View style={styles.warningCard}>
+                <Text style={styles.warningTitle}>⚠️ Real Data Mode</Text>
+                <Text style={styles.warningText}>
+                  Real health data integration is not yet implemented. Enable mock data in Settings to test AI insights.
+                </Text>
+              </View>
+            )}
+
+            {useMockData && renderHealthSummary()}
+          </ScrollView>
         ) : (
+          // Static header when carousel is active
           <>
+            {!useMockData && (
+              <View style={styles.warningCard}>
+                <Text style={styles.warningTitle}>⚠️ Real Data Mode</Text>
+                <Text style={styles.warningText}>
+                  Real health data integration is not yet implemented. Enable mock data in Settings to test AI insights.
+                </Text>
+              </View>
+            )}
+
+            {useMockData && renderHealthSummary()}
+            
             <View style={styles.header}>
               <Text style={styles.headerTitle}>🤖 AI Insights</Text>
               <Text style={styles.headerSubtitle}>
                 Personalized insights based on your mood and health patterns
               </Text>
             </View>
-            
-            {insights.map(renderInsight)}
-            
-            {useMockData && (
-              <TouchableOpacity style={styles.refreshButton} onPress={handleGenerateInsights}>
-                <Text style={styles.refreshButtonText}>🔄 Refresh Insights</Text>
-              </TouchableOpacity>
-            )}
           </>
         )}
       </View>
-    </ScrollView>
+
+      {/* Carousel or Empty State */}
+      {insights.length === 0 ? (
+        <ScrollView
+          style={styles.emptyScrollView}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <View style={styles.content}>
+            {renderEmptyState()}
+          </View>
+        </ScrollView>
+      ) : (
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={carouselRef}
+            data={insights}
+            renderItem={renderInsight}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            onMomentumScrollEnd={onScroll}
+            snapToInterval={screenWidth - 40}
+            snapToAlignment="center"
+            decelerationRate="fast"
+            contentContainerStyle={styles.carouselContent}
+            getItemLayout={(data, index) => ({
+              length: screenWidth - 40,
+              offset: (screenWidth - 40) * index,
+              index,
+            })}
+            keyExtractor={(item) => item.id}
+            scrollEventThrottle={16}
+            directionalLockEnabled={true}
+            alwaysBounceVertical={false}
+            alwaysBounceHorizontal={false}
+            bounces={false}
+            removeClippedSubviews={false}
+            disableIntervalMomentum={true}
+            disableScrollViewPanResponder={false}
+            nestedScrollEnabled={false}
+          />
+          
+          {insights.length > 1 && renderPaginationDots()}
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -254,8 +460,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  emptyScrollView: {
+    flex: 1,
+  },
   content: {
     padding: 20,
+  },
+  carouselContainer: {
+    flex: 1,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  carouselContent: {
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -326,6 +551,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
+    paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 24,
@@ -337,17 +563,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6b7280',
     lineHeight: 24,
+    marginBottom: 10,
   },
   insightCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    padding: 12,
+    marginHorizontal: 10,
+    marginBottom: 40,
+    height: 320,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  cardScrollView: {
+    flex: 1,
   },
   insightHeader: {
     flexDirection: 'row',
@@ -355,8 +587,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  insightTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  insightTypeIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
   insightTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
     flex: 1,
@@ -373,48 +614,53 @@ const styles = StyleSheet.create({
     color: '#1e40af',
   },
   insightDescription: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#374151',
-    lineHeight: 24,
-    marginBottom: 16,
+    lineHeight: 20,
+    marginBottom: 10,
   },
   correlationsSection: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   correlationsTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#6b7280',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   correlationItem: {
     backgroundColor: '#f8fafc',
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    padding: 10,
+    marginBottom: 6,
   },
   correlationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
+    flexWrap: 'wrap',
   },
   correlationIcon: {
-    fontSize: 20,
-    marginRight: 8,
+    fontSize: 18,
+    marginRight: 6,
   },
   correlationMetric: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#374151',
     flex: 1,
+    minWidth: 0,
   },
   correlationTrend: {
-    fontSize: 16,
+    fontSize: 14,
+    marginLeft: 4,
   },
   correlationDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   strengthBadge: {
     borderRadius: 6,
@@ -433,18 +679,18 @@ const styles = StyleSheet.create({
   recommendationSection: {
     backgroundColor: '#eff6ff',
     borderRadius: 12,
-    padding: 16,
+    padding: 10,
   },
   recommendationTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#1e40af',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   recommendationText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#1e40af',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   emptyState: {
     alignItems: 'center',
@@ -478,12 +724,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  refreshContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
   refreshButton: {
     backgroundColor: '#f8fafc',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
@@ -491,6 +741,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#374151',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#d1d5db',
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#6366f1',
+    width: 12,
+    height: 8,
+    borderRadius: 4,
   },
 });
 

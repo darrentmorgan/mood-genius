@@ -11,6 +11,7 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import {HealthSettings} from '../types/health';
 import {getHealthSettings, saveHealthSettings, toggleMockData} from '../utils/healthSettings';
+import {generateSampleMoodEntries, clearMoodEntries, debugMoodEntries} from '../utils/storage';
 import MockHealthService from '../services/MockHealthService';
 
 const SettingsScreen = () => {
@@ -67,6 +68,46 @@ const SettingsScreen = () => {
     } catch (error) {
       Alert.alert('Error', 'Failed to refresh mock data');
     }
+  };
+
+  const handleGenerateSampleMoods = async () => {
+    try {
+      console.log('🎭 Settings: Generating sample mood data...');
+      await generateSampleMoodEntries(true); // Force generation even if entries exist
+      
+      // Debug the results
+      await debugMoodEntries();
+      
+      Alert.alert('Success', 'Generated 7 days of sample mood entries! Check your mood history and try generating insights.');
+    } catch (error) {
+      console.error('❌ Settings: Failed to generate sample mood data:', error);
+      Alert.alert('Error', 'Failed to generate sample mood data. Check console for details.');
+    }
+  };
+
+  const handleClearAllData = () => {
+    Alert.alert(
+      'Clear All Test Data',
+      'This will remove all mood entries, health data, and insights. Are you sure?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await Promise.all([
+                MockHealthService.clearMockData(),
+                clearMoodEntries()
+              ]);
+              Alert.alert('Success', 'All test data cleared');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear data');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleClearMockData = () => {
@@ -162,7 +203,14 @@ const SettingsScreen = () => {
         {/* Mock Data Controls */}
         {settings.useMockData && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mock Data Controls</Text>
+            <Text style={styles.sectionTitle}>Testing Data Controls</Text>
+            
+            <TouchableOpacity style={styles.actionButton} onPress={handleGenerateSampleMoods}>
+              <Text style={styles.actionButtonText}>🎭 Generate 7 Days of Sample Moods</Text>
+              <Text style={styles.actionButtonDescription}>
+                Creates mood entries from today back to 6 days ago for testing
+              </Text>
+            </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionButton} onPress={handleRefreshMockData}>
               <Text style={styles.actionButtonText}>🔄 Refresh Mock Data</Text>
@@ -175,9 +223,19 @@ const SettingsScreen = () => {
               style={[styles.actionButton, styles.dangerButton]} 
               onPress={handleClearMockData}
             >
-              <Text style={[styles.actionButtonText, styles.dangerText]}>🗑️ Clear Mock Data</Text>
+              <Text style={[styles.actionButtonText, styles.dangerText]}>🗑️ Clear Health Data</Text>
               <Text style={styles.actionButtonDescription}>
-                Remove all generated health data and insights
+                Remove generated health data and insights only
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.dangerButton]} 
+              onPress={handleClearAllData}
+            >
+              <Text style={[styles.actionButtonText, styles.dangerText]}>💥 Clear All Test Data</Text>
+              <Text style={styles.actionButtonDescription}>
+                Remove all mood entries, health data, and insights
               </Text>
             </TouchableOpacity>
           </View>
