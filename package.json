@@ -10,7 +10,14 @@
     "expo": "watchman watch-del-all && rm -rf $TMPDIR/metro-* && npx expo start --clear",
     "clean-start": "./start.sh",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest __tests__/unit",
+    "test:integration": "jest __tests__/integration",
+    "test:components": "jest __tests__/components",
+    "test:e2e": "detox test",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
