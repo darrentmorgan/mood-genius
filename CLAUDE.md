@@ -27,14 +27,51 @@ MoodGenius is a React Native Expo app that tracks mood patterns and correlates t
 - `npm run lint`: Run ESLint
 - `npm run typecheck`: Run TypeScript checker
 
-### Testing (TDD Workflow)
-- `npm test`: Run all tests once
-- `npm run test:watch`: Run tests in watch mode (recommended for TDD)
-- `npm run test:unit`: Run unit tests only
-- `npm run test:integration`: Run integration tests
-- `npm run test:components`: Run component tests
-- `npm run test:coverage`: Generate test coverage report
+### Testing (TDD Workflow) - MANDATORY COMMANDS
+- `npm test`: **YOU MUST** run all tests before every commit - **REQUIRED**
+- `npm run test:watch`: **YOU MUST** run this and keep it running during ALL development - **MANDATORY**
+- `npm run test:unit`: Run unit tests only (use for focused TDD cycles)
+- `npm run test:integration`: Run integration tests (required for Firebase features)
+- `npm run test:components`: Run component tests (required for UI changes)
+- `npm run test:coverage`: **YOU MUST** check coverage regularly - aim for >80% - **REQUIRED**
 - `npm run test:e2e`: Run end-to-end tests (requires simulator)
+
+**CRITICAL: If you don't have `npm run test:watch` running, you're not following TDD properly.**
+
+## 🚨 TDD ENFORCEMENT EXAMPLES 🚨
+
+### ❌ WRONG WAY (DO NOT DO THIS):
+```javascript
+// WRONG: Writing implementation code first
+export const calculateAverage = (numbers) => {
+  return numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
+};
+```
+
+### ✅ CORRECT WAY (YOU MUST DO THIS):
+```javascript
+// STEP 1: Write test FIRST
+// __tests__/unit/utils/math.test.js
+describe('calculateAverage', () => {
+  it('should calculate average of numbers array', () => {
+    expect(calculateAverage([2, 4, 6])).toBe(4);
+  });
+});
+
+// STEP 2: Run test (should fail - RED state)
+// STEP 3: Write minimal code to pass (GREEN state)
+// STEP 4: Refactor while keeping tests green
+```
+
+### MANDATORY CHECKLIST FOR EVERY FEATURE:
+- [ ] **Test file created BEFORE implementation** 
+- [ ] **Test written and failing (RED state confirmed)**
+- [ ] **Minimal code written to pass test (GREEN state)**
+- [ ] **Code refactored while keeping tests passing**
+- [ ] **Full test suite passes (`npm test`)**
+- [ ] **Test coverage meets requirements**
+
+**IF ANY CHECKBOX IS UNCHECKED, YOU ARE NOT FOLLOWING TDD CORRECTLY**
 
 ## Code Style Guidelines
 - Use ES modules (import/export) syntax, not CommonJS (require)
@@ -92,46 +129,82 @@ src/
 - Evidence-based insights from sleep/mood research
 - Adaptive suggestions based on user patterns
 
-## Test-Driven Development (TDD) Guidelines
+## 🚨 MANDATORY Test-Driven Development (TDD) Guidelines 🚨
 
-### Core TDD Workflow
-1. **🔴 Red**: Write a failing test that describes the desired functionality
-2. **🟢 Green**: Write the minimal code to make the test pass
-3. **🔵 Refactor**: Improve the code while keeping tests passing
-4. **🔄 Repeat**: Continue cycle for each new feature or bug fix
+### ⚠️ CRITICAL: NO CODE WITHOUT TESTS FIRST ⚠️
 
-### Testing Framework Setup
+**YOU MUST FOLLOW TDD FOR ALL NEW FEATURES - NO EXCEPTIONS**
+
+This is not optional. Every single new feature, component, or utility function MUST be implemented using Test-Driven Development. Failure to follow TDD will result in technical debt and bugs.
+
+### MANDATORY Core TDD Workflow
+1. **🔴 Red**: **YOU MUST** write a failing test that describes the desired functionality BEFORE writing any implementation code
+2. **🟢 Green**: **YOU MUST** write the minimal code to make the test pass (and only that)
+3. **🔵 Refactor**: **YOU MUST** improve the code while keeping tests passing
+4. **🔄 Repeat**: **YOU MUST** continue this cycle for each new feature or bug fix
+
+**IMPORTANT: If you write implementation code before tests, you are doing it wrong. STOP and write the test first.**
+
+### MANDATORY Testing Framework Setup (ALREADY CONFIGURED)
+
+**IMPORTANT: Testing infrastructure is already set up. You MUST use it.**
+
 ```bash
-# Install testing dependencies
-npm install --save-dev jest @testing-library/react-native @testing-library/jest-native
-npm install --save-dev react-test-renderer @react-native-firebase/firestore-testing
-npm install --save-dev detox # For E2E testing
+# Testing dependencies are already installed:
+# - @testing-library/react-native
+# - react-test-renderer  
+# - jest configuration in jest.config.js
+
+# YOU MUST run this before starting ANY development work:
+npm run test:watch  # Keep this running at ALL times during development
 ```
 
-### Test Categories & Priorities
+### 🚨 ABSOLUTE REQUIREMENTS FOR ALL DEVELOPMENT 🚨
 
-#### 1. Unit Tests (Highest Priority)
-- **Utils & Services**: Test pure functions and business logic
-- **Custom Hooks**: Test `useAuth`, health data processing
-- **Mock Data Generation**: Test correlation algorithms
-- **Date Utilities**: Test mood entry date calculations
+**BEFORE writing ANY new feature, YOU MUST:**
 
-#### 2. Component Tests (High Priority)
-- **Authentication Forms**: Login/SignUp validation and submission
-- **Mood Entry Components**: Slider interaction and data submission
-- **Navigation Flows**: AuthWrapper behavior and route protection
-- **Settings Management**: Health settings toggle and persistence
+1. **Start test watcher**: `npm run test:watch` (keep running)
+2. **Create test file FIRST**: `touch __tests__/unit/[feature].test.js`  
+3. **Write failing test**: Describe what the feature should do
+4. **Verify RED state**: Test MUST fail initially
+5. **Write minimal code**: Only enough to pass the test
+6. **Verify GREEN state**: Test MUST pass
+7. **Refactor if needed**: Improve code while keeping tests passing
 
-#### 3. Integration Tests (Medium Priority)
-- **Firebase Operations**: Auth flows and Firestore CRUD operations
-- **Offline Sync**: Data persistence and sync when coming online
-- **Health Data Correlation**: Mock data generation with mood patterns
-- **Context Providers**: AuthContext state management
+**VIOLATION OF THIS PROCESS IS NOT PERMITTED**
 
-#### 4. End-to-End Tests (Lower Priority)
+### MANDATORY Test Categories & Requirements
+
+**YOU MUST write tests in this exact order for every feature:**
+
+#### 1. Unit Tests (MANDATORY - Write FIRST)
+- **Utils & Services**: **YOU MUST** test pure functions and business logic
+- **Custom Hooks**: **YOU MUST** test `useAuth`, health data processing
+- **Mock Data Generation**: **YOU MUST** test correlation algorithms
+- **Date Utilities**: **YOU MUST** test mood entry date calculations
+
+**CRITICAL: If you're adding a utility function, service, or business logic, write unit tests BEFORE any other code.**
+
+#### 2. Component Tests (REQUIRED - Write SECOND)
+- **Authentication Forms**: **YOU MUST** test login/SignUp validation and submission
+- **Mood Entry Components**: **YOU MUST** test slider interaction and data submission
+- **Navigation Flows**: **YOU MUST** test AuthWrapper behavior and route protection
+- **Settings Management**: **YOU MUST** test health settings toggle and persistence
+
+**IMPORTANT: Every React component MUST have corresponding tests that verify user interactions.**
+
+#### 3. Integration Tests (REQUIRED for Firebase Features)
+- **Firebase Operations**: **YOU MUST** test auth flows and Firestore CRUD operations
+- **Offline Sync**: **YOU MUST** test data persistence and sync when coming online
+- **Health Data Correlation**: **YOU MUST** test mock data generation with mood patterns
+- **Context Providers**: **YOU MUST** test AuthContext state management
+
+#### 4. End-to-End Tests (Optional but Recommended)
 - **Complete User Flows**: Signup → Mood Entry → View History → Insights
 - **Cross-Screen Navigation**: Tab navigation and stack navigation
 - **Data Persistence**: Full app lifecycle with data retention
+
+**VIOLATION WARNING: Writing code without corresponding tests in the appropriate category will create technical debt.**
 
 ### Testing Specific Features
 
@@ -240,12 +313,17 @@ module.exports = {
 };
 ```
 
-### TDD Integration with Development Workflow
-1. **Before New Features**: Write tests first, then implement
-2. **Bug Fixes**: Write test reproducing bug, then fix
-3. **Refactoring**: Ensure all tests pass before and after changes
-4. **Code Review**: Require tests for all new functionality
-5. **CI/CD**: Run full test suite before merging/deploying
+### 🚨 MANDATORY TDD Integration with Development Workflow 🚨
+
+**THESE STEPS ARE NON-NEGOTIABLE:**
+
+1. **Before New Features**: **YOU MUST** write tests first, then implement (NO EXCEPTIONS)
+2. **Bug Fixes**: **YOU MUST** write test reproducing bug, then fix (REQUIRED)
+3. **Refactoring**: **YOU MUST** ensure all tests pass before and after changes (CRITICAL)
+4. **Code Review**: **YOU MUST** require tests for all new functionality (MANDATORY)
+5. **CI/CD**: **YOU MUST** run full test suite before merging/deploying (REQUIRED)
+
+**IMPORTANT: Any code written without following these steps will be rejected and must be rewritten with proper TDD.**
 
 ### Testing Critical User Flows
 #### Priority 1 (Must Test)
@@ -406,24 +484,50 @@ test('should save mood entry to Firestore', async () => {
 });
 ```
 
-## Development Workflow
-1. **Planning**: Always read relevant files first, don't code immediately
-2. **Test First**: Write failing tests before implementing features (TDD)
-3. **Implementation**: Make changes incrementally with continuous testing
-4. **Verification**: Ensure all tests pass before committing
-5. **Integration Testing**: Test Firebase features with development client
-6. **Commit**: Use descriptive commit messages with test coverage info
-7. **Firebase**: Run `npx expo prebuild --clean` after Firebase changes
+## 🚨 MANDATORY Development Workflow 🚨
 
-## Important Notes
-- **TDD First**: Always write tests before implementing new features
-- **Test Before Commit**: Run `npm test` and ensure all tests pass before committing
+**YOU MUST FOLLOW THESE STEPS IN EXACT ORDER FOR EVERY TASK:**
+
+1. **Planning**: **YOU MUST** read relevant files first, don't code immediately
+2. **Test First**: **YOU MUST** write failing tests before implementing features (TDD) - **NO EXCEPTIONS**
+3. **Test Watcher**: **YOU MUST** run `npm run test:watch` and keep it running throughout development
+4. **Red-Green-Refactor**: **YOU MUST** follow TDD cycle religiously
+5. **Implementation**: **YOU MUST** make changes incrementally with continuous testing
+6. **Verification**: **YOU MUST** ensure ALL tests pass before committing (use `npm test`)
+7. **Integration Testing**: **YOU MUST** test Firebase features with development client
+8. **Commit**: **YOU MUST** use descriptive commit messages with test coverage info
+9. **Firebase**: Run `npx expo prebuild --clean` after Firebase changes
+
+**CRITICAL ENFORCEMENT:**
+- If tests are not written first → STOP and write tests
+- If `npm test` fails → STOP and fix before committing  
+- If no test coverage for new code → STOP and add tests
+
+**VIOLATION OF THIS WORKFLOW IS NOT PERMITTED**
+
+## 🚨 CRITICAL IMPORTANT NOTES 🚨
+
+### TESTING REQUIREMENTS (NON-NEGOTIABLE)
+- **TDD MANDATORY**: **YOU MUST** write tests before implementing ANY new features - **NO EXCEPTIONS**
+- **Test Before Commit**: **YOU MUST** run `npm test` and ensure ALL tests pass before committing - **REQUIRED**
+- **Test Coverage**: **YOU MUST** maintain >80% test coverage for critical user flows - **MANDATORY**
+- **Test Watcher**: **YOU MUST** keep `npm run test:watch` running during development - **REQUIRED**
+
+### DEVELOPMENT REQUIREMENTS
 - **Cannot use Expo Go** with Firebase features - requires development build
 - **iOS requires** `"useFrameworks": "static"` in app.json
-- **Always run typecheck and tests** after making code changes
+- **Always run typecheck and tests** after making code changes - **MANDATORY**
 - **Clear cache frequently** with `npx expo start --clear` if issues arise
 - **Mock data first**: Build features with mock data before real API integration
-- **Test Coverage**: Maintain >80% test coverage for critical user flows
+
+### 🚨 FAILURE TO FOLLOW TDD WILL RESULT IN:
+- **Technical debt accumulation**
+- **Increased bug reports**
+- **Regression issues**
+- **Development slowdown**
+- **Code quality degradation**
+
+**REMEMBER: NO CODE WITHOUT TESTS FIRST - THIS IS NOT OPTIONAL**
 
 ## Known Issues & Warnings
 - Hermes engine can cause `require doesn't exist` errors - use ES6 imports

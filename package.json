@@ -49,6 +49,8 @@
     "@react-native/babel-preset": "^0.80.2",
     "@react-native/eslint-config": "^0.72.2",
     "@react-native/metro-config": "^0.72.12",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.2.0",
     "@tsconfig/react-native": "^3.0.0",
     "@types/react": "~19.0.10",
     "@types/react-test-renderer": "^18.0.0",
@@ -58,11 +60,8 @@
     "metro-file-map": "^0.83.1",
     "metro-react-native-babel-preset": "0.76.8",
     "prettier": "^2.4.1",
-    "react-test-renderer": "18.2.0",
+    "react-test-renderer": "^19.0.0",
     "typescript": "~5.8.3"
-  },
-  "jest": {
-    "preset": "react-native"
   },
   "private": true
 }
