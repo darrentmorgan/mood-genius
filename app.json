@@ -3,7 +3,7 @@
   "displayName": "MoodGenius",
   "expo": {
     "name": "MoodGenius",
-    "slug": "mood-genius", 
+    "slug": "mood-genius",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -15,6 +15,7 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.myeasysoftware.moodgenius",
       "supportsTablet": true,
       "jsEngine": "hermes",
       "googleServicesFile": "./GoogleService-Info.plist"
@@ -24,7 +25,8 @@
         "backgroundColor": "#6366f1"
       },
       "jsEngine": "hermes",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.myeasysoftware.moodgenius"
     },
     "web": {
       "bundler": "metro"

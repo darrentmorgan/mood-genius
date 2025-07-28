@@ -1,7 +1,6 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {createStackNavigator} from '@react-navigation/stack';
 import {Text, Platform} from 'react-native';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { AuthProvider } from './src/context/AuthContext';
@@ -12,20 +11,9 @@ import MoodEntryScreen from './src/screens/MoodEntryScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import InsightsScreen from './src/screens/InsightsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import SignUpScreen from './src/screens/SignUpScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
-// Auth Stack for login/signup
-const AuthStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Login" component={LoginScreen} />
-    <Stack.Screen name="SignUp" component={SignUpScreen} />
-  </Stack.Navigator>
-);
 
 // Main App Tabs (authenticated users)
 const MainTabs = () => (
@@ -82,18 +70,9 @@ const App = () => {
       <ErrorBoundary>
         <AuthProvider>
           <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              {/* Auth Stack */}
-              <Stack.Screen name="Auth" component={AuthStack} />
-              {/* Main App wrapped with auth protection */}
-              <Stack.Screen name="Main">
-                {() => (
-                  <AuthWrapper>
-                    <MainTabs />
-                  </AuthWrapper>
-                )}
-              </Stack.Screen>
-            </Stack.Navigator>
+            <AuthWrapper>
+              <MainTabs />
+            </AuthWrapper>
           </NavigationContainer>
         </AuthProvider>
       </ErrorBoundary>
