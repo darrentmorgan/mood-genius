@@ -168,11 +168,6 @@ const InsightsScreen = () => {
 
   const renderInsight = ({ item: insight, index }: { item: AIInsight; index: number }) => (
     <View style={[styles.insightCard, { width: screenWidth - 60 }]}>
-      <ScrollView 
-        style={styles.cardScrollView}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
         <View style={styles.insightHeader}>
           <View style={styles.insightTitleContainer}>
             <Text style={styles.insightTypeIcon}>{getInsightTypeIcon(insight.type)}</Text>
@@ -244,7 +239,6 @@ const InsightsScreen = () => {
             </Text>
           </View>
         )}
-      </ScrollView>
     </View>
   );
 
@@ -473,8 +467,8 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     flex: 1,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   carouselContent: {
     paddingLeft: 20,
@@ -568,24 +562,21 @@ const styles = StyleSheet.create({
   insightCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
     marginHorizontal: 10,
-    marginBottom: 40,
-    height: 320,
+    marginBottom: 10,
+    flex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  cardScrollView: {
-    flex: 1,
-  },
   insightHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   insightTitleContainer: {
     flexDirection: 'row',
@@ -616,11 +607,11 @@ const styles = StyleSheet.create({
   insightDescription: {
     fontSize: 14,
     color: '#374151',
-    lineHeight: 20,
-    marginBottom: 10,
+    lineHeight: 18,
+    marginBottom: 8,
   },
   correlationsSection: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   correlationsTitle: {
     fontSize: 13,
@@ -688,9 +679,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   recommendationText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#1e40af',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   emptyState: {
     alignItems: 'center',
@@ -746,8 +737,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingTop: 20,
+    paddingBottom: 60,
     paddingHorizontal: 20,
+    marginTop: 10,
   },
   paginationDot: {
     width: 8,
