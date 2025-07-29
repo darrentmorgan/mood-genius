@@ -151,6 +151,7 @@ const InsightsScreen = () => {
     switch (type) {
       case 'research': return '#3b82f6';
       case 'correlation': return '#8b5cf6';
+      case 'trend': return '#f59e0b';
       case 'recommendation': return '#10b981';
       default: return '#6366f1';
     }
@@ -229,7 +230,8 @@ const InsightsScreen = () => {
               {color: getInsightTypeColor(insight.type)}
             ]}>
               {insight.type === 'research' ? '🔬 Research Says:' : 
-               insight.type === 'correlation' ? '📊 Your Pattern:' : '💡 Recommendation:'}
+               insight.type === 'correlation' ? '📊 Your Pattern:' : 
+               insight.type === 'trend' ? '📈 Trend Analysis:' : '💡 Recommendation:'}
             </Text>
             <Text style={[
               styles.recommendationText,
@@ -262,10 +264,10 @@ const InsightsScreen = () => {
             style={[styles.generateButton, {backgroundColor: '#f59e0b', marginTop: 10}]} 
             onPress={() => {
               console.log('🧪 Creating test insights for carousel...');
-              const testInsights = [
+              const testInsights: AIInsight[] = [
                 {
                   id: 'test1',
-                  type: 'research',
+                  type: 'research' as const,
                   title: 'Test Sleep Insight',
                   description: 'This is a test insight to verify the carousel is working.',
                   confidence: 85,
@@ -273,8 +275,8 @@ const InsightsScreen = () => {
                   recommendation: 'This is a test recommendation.',
                 },
                 {
-                  id: 'test2',
-                  type: 'correlation',
+                  id: 'test2', 
+                  type: 'correlation' as const,
                   title: 'Test Activity Insight',
                   description: 'This is another test insight for the carousel.',
                   confidence: 92,

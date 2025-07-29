@@ -2,16 +2,14 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Text, Platform} from 'react-native';
+import { NativeBaseProvider } from 'native-base';
+import 'react-native-reanimated';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { AuthProvider } from './src/context/AuthContext';
 import AuthWrapper from './src/components/AuthWrapper';
+import { theme } from './src/theme';
 
-import HomeScreen from './src/screens/HomeScreen';
-import MoodEntryScreen from './src/screens/MoodEntryScreen';
-import HistoryScreen from './src/screens/HistoryScreen';
-import InsightsScreen from './src/screens/InsightsScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
+import TestScreen from './src/screens/TestScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,35 +20,23 @@ const MainTabs = () => (
       tabBarIcon: ({focused, color, size}) => {
         let emoji;
 
-        if (route.name === 'Home') {
-          emoji = '🏠';
-        } else if (route.name === 'Mood Entry') {
-          emoji = '✨';
-        } else if (route.name === 'History') {
-          emoji = '📊';
-        } else if (route.name === 'Insights') {
-          emoji = '🤖';
-        } else if (route.name === 'Profile') {
-          emoji = '👤';
+        if (route.name === 'Test') {
+          emoji = '🧪';
         }
 
         return <Text style={{fontSize: size * 0.8, color}}>{emoji}</Text>;
       },
-      tabBarActiveTintColor: '#6366f1',
-      tabBarInactiveTintColor: 'gray',
+      tabBarActiveTintColor: '#4ADE80',
+      tabBarInactiveTintColor: '#9CA3AF',
       headerStyle: {
-        backgroundColor: '#6366f1',
+        backgroundColor: '#4ADE80',
       },
-      headerTintColor: '#fff',
+      headerTintColor: '#FFFFFF',
       headerTitleStyle: {
         fontWeight: 'bold',
       },
     })}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Mood Entry" component={MoodEntryScreen} />
-      <Tab.Screen name="History" component={HistoryScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Test" component={TestScreen} />
     </Tab.Navigator>
 );
 
@@ -67,15 +53,11 @@ const App = () => {
   
   try {
     return (
-      <ErrorBoundary>
-        <AuthProvider>
-          <NavigationContainer>
-            <AuthWrapper>
-              <MainTabs />
-            </AuthWrapper>
-          </NavigationContainer>
-        </AuthProvider>
-      </ErrorBoundary>
+      <NativeBaseProvider>
+        <NavigationContainer>
+          <MainTabs />
+        </NavigationContainer>
+      </NativeBaseProvider>
     );
   } catch (error) {
     console.error('🚨 App: Error in App component:', error);

@@ -40,7 +40,7 @@ export interface HealthCorrelation {
 
 export interface AIInsight {
   id: string;
-  type: 'correlation' | 'trend' | 'recommendation';
+  type: 'correlation' | 'trend' | 'recommendation' | 'research';
   title: string;
   description: string;
   confidence: number; // 0-100

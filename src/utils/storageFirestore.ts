@@ -52,7 +52,8 @@ export const getMoodEntries = async (): Promise<MoodEntry[]> => {
   try {
     if (canUseFirestore()) {
       // Get from Firestore
-      return await FirestoreService.getMoodEntries();
+      const result = await FirestoreService.getMoodEntries();
+      return result as MoodEntry[];
     } else {
       // Fallback to AsyncStorage
       return await getMoodEntriesFromLocal();
@@ -68,7 +69,8 @@ export const getTodaysMoodEntry = async (): Promise<MoodEntry | null> => {
   try {
     if (canUseFirestore()) {
       // Get from Firestore
-      return await FirestoreService.getTodaysMoodEntry();
+      const result = await FirestoreService.getTodaysMoodEntry();
+      return result as MoodEntry | null;
     } else {
       // Fallback to AsyncStorage
       const entries = await getMoodEntriesFromLocal();
